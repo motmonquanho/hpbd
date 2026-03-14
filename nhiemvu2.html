@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhiệm Vụ 2 - Ghép Ảnh Cún</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Quicksand', sans-serif; 
+            background: linear-gradient(135deg, #fed7aa 0%, #fef9c3 100%);
+            min-height: 100vh;
+        }
+
+        /* Khung tranh chứa mảnh ghép */
+        .frame-container {
+            background: #78350f; /* Màu gỗ đậm */
+            padding: 8px;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255,255,255,0.2);
+            border: 4px solid #92400e;
+        }
+
+        /* Lưới 3x3 (9 mảnh) */
+        #frame {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            background-color: #451a03;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+        }
+
+        .slot {
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        /* Khay chứa mảnh ghép */
+        #tray {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 3px dashed #fdba74;
+            border-radius: 20px;
+            min-height: 120px;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .piece {
+            /* Phóng to ảnh gấp 3 lần vì là lưới 3x3 */
+            background-size: 300% 300%;
+            background-repeat: no-repeat;
+            cursor: pointer;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+            position: relative;
+        }
+
+        #tray .piece {
+            /* Mảnh ghép ở khay to hơn một chút cho dễ nhìn */
+            width: 20vw;
+            height: 20vw;
+            max-width: 80px;
+            max-height: 80px;
+            border: 2px solid transparent;
+        }
+
+        #frame .piece {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+            box-shadow: none;
+            border: none;
+        }
+
+        .piece.selected {
+            border: 4px solid #ef4444 !important;
+            transform: scale(1.1);
+            z-index: 50;
+            box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4) !important;
+        }
+
+        .btn-preview {
+            background: linear-gradient(to right, #3b82f6, #2563eb);
+            transition: transform 0.2s;
+        }
+        .btn-preview:active { transform: scale(0.95); }
+
+        /* Màn hình Loading */
+        #loadingOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid #f3f4f6;
+            border-radius: 50%;
+            border-top-color: #f59e0b;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body class="flex flex-col items-center py-6 px-2 sm:px-4">
+    <!-- ========================================== -->
+    <!-- PHẦN 1: HTML NHẠC NỀN (DÁN VÀO SAU THẺ BODY) -->
+    <!-- ========================================== -->
+    <audio id="bgMusic" loop>
+        <source src="nhac-nen.mp3" type="audio/mpeg">
+    </audio>
+
+    <button id="musicToggle" class="fixed top-4 right-4 z-[9999] bg-white/80 backdrop-blur-sm w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full shadow-lg border-2 border-yellow-300 text-xl sm:text-2xl hover:scale-110 transition-transform cursor-pointer">
+        🔇
+    </button>
+    <!-- ========================================== -->
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <p class="text-orange-600 font-bold animate-pulse">Đang tải ảnh của bạn...</p>
+    </div>
+
+    <div class="bg-white/90 p-4 md:p-8 rounded-[30px] shadow-2xl text-center max-w-2xl w-full border-4 border-orange-300 relative">
+        <h1 class="text-2xl md:text-3xl font-bold text-orange-700 mb-1">🖼️ Ghép Ảnh Của Bạn</h1>
+        <p class="text-sm text-gray-600 mb-4 font-semibold">Chạm 1 mảnh ghép, sau đó chạm vào khung để đặt hoặc đổi chỗ!</p>
+        
+        <div class="flex justify-between items-center mb-6">
+            <button onclick="togglePreview()" class="btn-preview text-white text-xs sm:text-sm font-bold py-2 px-4 rounded-xl shadow-lg flex items-center gap-2">
+                <span>👁️</span> Xem Ảnh Mẫu
+            </button>
+            <div class="bg-orange-100 px-4 py-2 rounded-xl border border-orange-200">
+                <span class="font-bold text-orange-800 text-sm">Chính xác:</span>
+                <span id="scoreText" class="font-black text-lg text-red-500 ml-1">0 / 9</span>
+            </div>
+        </div>
+
+        <div class="max-w-[400px] mx-auto mb-6">
+            <div class="frame-container">
+                <div id="frame">
+                    <!-- 9 ô trống sẽ được tạo ở đây -->
+                </div>
+            </div>
+        </div>
+
+        <p class="text-xs font-bold text-orange-400 uppercase tracking-widest mb-2">👇 Khay chứa mảnh ghép 👇</p>
+        
+        <div id="tray">
+            <!-- 9 mảnh ghép -->
+        </div>
+
+        <a href="index.html" class="inline-block mt-6 text-sm font-bold text-gray-400 hover:text-red-500 underline transition-colors">
+            Quay lại trang chủ (Hủy nhiệm vụ)
+        </a>
+
+        <!-- Modal xem ảnh mẫu -->
+        <div id="previewModal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black/60 rounded-[26px] backdrop-blur-sm p-6 transition-opacity" onclick="togglePreview()">
+            <img id="previewImage" src="" alt="Ảnh mẫu" class="max-w-full max-h-[80%] rounded-2xl border-4 border-white shadow-2xl pointer-events-none">
+            <p class="absolute bottom-10 text-white font-bold animate-pulse">Chạm vào bất cứ đâu để đóng</p>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // PHẦN 2: JAVASCRIPT NHẠC NỀN (DÁN VÀO ĐẦU THẺ SCRIPT)
+        // ==========================================
+        const bgMusic = document.getElementById('bgMusic');
+        const musicToggle = document.getElementById('musicToggle');
+        
+        let isMusicPlaying = localStorage.getItem('dogGame_musicPlaying') === 'true';
+        let savedTime = parseFloat(localStorage.getItem('dogGame_musicTime')) || 0;
+        
+        bgMusic.volume = 0.5;
+        
+        if (savedTime > 0) {
+            bgMusic.currentTime = savedTime;
+        }
+
+        function playMusic() {
+            bgMusic.play().then(() => {
+                isMusicPlaying = true;
+                musicToggle.innerText = '🔊';
+                localStorage.setItem('dogGame_musicPlaying', 'true');
+            }).catch(e => {
+                musicToggle.innerText = '🔇';
+                isMusicPlaying = false;
+            });
+        }
+
+        if (isMusicPlaying) {
+            playMusic();
+        }
+
+        document.body.addEventListener('click', () => {
+            if (!isMusicPlaying && localStorage.getItem('dogGame_musicPlaying') !== 'false') {
+                playMusic();
+            }
+        }, { once: true });
+
+        musicToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                isMusicPlaying = false;
+                musicToggle.innerText = '🔇';
+                localStorage.setItem('dogGame_musicPlaying', 'false');
+            } else {
+                playMusic();
+            }
+        });
+
+        setInterval(() => {
+            if (isMusicPlaying) {
+                localStorage.setItem('dogGame_musicTime', bgMusic.currentTime);
+            }
+        }, 500);
+
+        window.addEventListener('beforeunload', () => {
+            if (isMusicPlaying) {
+                localStorage.setItem('dogGame_musicTime', bgMusic.currentTime);
+            }
+        });
+        // ==========================================
+        // --- CẤU HÌNH ---
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxtEGfB0xd3yHecrAcD61F9ZPj1UJvgQ8IH2Pmyr-06BQMUPZLVrmw7xYds_C6nkgKq/exec"; 
+        
+        const GRID_SIZE = 3;
+        const TOTAL_PIECES = GRID_SIZE * GRID_SIZE; // 9 mảnh
+        const frame = document.getElementById('frame');
+        const tray = document.getElementById('tray');
+        
+        let piecesArray = [];
+        let selectedPiece = null;
+
+        // 1. Lấy hình ảnh từ GAS và xử lý lỗi tải ảnh
+        document.addEventListener('DOMContentLoaded', () => {
+            const playerName = localStorage.getItem('dogGame_playerName');
+            
+            // Link ảnh online dự phòng (Rất đẹp và không bao giờ lỗi)
+            const fallbackOnlineUrl = 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=800&q=80';
+            const defaultLocalUrl = 'image_3e6d02.jpg';
+
+            if (!playerName) {
+                loadImageSafely(defaultLocalUrl, fallbackOnlineUrl);
+                return;
+            }
+
+            fetch(`${SCRIPT_URL}?action=getImage&playerName=${encodeURIComponent(playerName)}`)
+                .then(response => response.json())
+                .then(data => {
+                    let targetUrl = defaultLocalUrl;
+                    
+                    if (data.url && data.url !== "Không có hình") {
+                        // Trích xuất ID từ link Google Drive để dùng api Thumbnail (tránh bị lỗi CORS/trắng xóa)
+                        let fileId = "";
+                        const match1 = data.url.match(/\/d\/(.+?)\//);
+                        const match2 = data.url.match(/id=(.+?)(&|$)/);
+                        
+                        if (match1) fileId = match1[1];
+                        else if (match2) fileId = match2[1];
+                        
+                        if (fileId) {
+                            // Dùng Thumbnail API giúp ảnh không bị lỗi
+                            targetUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+                        } else {
+                            targetUrl = data.url;
+                        }
+                    }
+                    
+                    // Thử tải ảnh, nếu lỗi thì dùng ảnh dự phòng
+                    loadImageSafely(targetUrl, fallbackOnlineUrl);
+                })
+                .catch(error => {
+                    console.error("Lỗi khi gọi API:", error);
+                    loadImageSafely(defaultLocalUrl, fallbackOnlineUrl);
+                });
+        });
+
+        // Hàm Tải Ảnh An Toàn - Tránh hiện tượng vỡ ảnh hoặc màn hình trắng
+        function loadImageSafely(primaryUrl, fallbackUrl) {
+            const img = new Image();
+            img.onload = () => {
+                // Nếu tải thành công, bắt đầu game với ảnh chính
+                initPuzzle(primaryUrl); 
+            };
+            img.onerror = () => {
+                console.warn("Lỗi tải ảnh (Có thể do Drive chặn). Đang dùng ảnh dự phòng!");
+                // Nếu lỗi (vỡ ảnh), dùng ảnh online dự phòng
+                initPuzzle(fallbackUrl); 
+            };
+            img.src = primaryUrl;
+        }
+
+        // 2. Khởi tạo trò chơi (Lưới 3x3)
+        function initPuzzle(imageUrl) {
+            document.getElementById('previewImage').src = imageUrl;
+            
+            frame.innerHTML = '';
+            tray.innerHTML = '';
+            piecesArray = [];
+
+            for(let i = 0; i < TOTAL_PIECES; i++) {
+                let slot = document.createElement('div');
+                slot.classList.add('slot');
+                slot.dataset.index = i;
+                slot.addEventListener('click', handleSlotClick);
+                frame.appendChild(slot);
+            }
+
+            for(let i = 0; i < TOTAL_PIECES; i++) {
+                let row = Math.floor(i / GRID_SIZE);
+                let col = i % GRID_SIZE;
+                
+                let piece = document.createElement('div');
+                piece.classList.add('piece');
+                piece.dataset.id = i;
+                // Áp dụng ảnh an toàn
+                piece.style.backgroundImage = `url('${imageUrl}')`;
+                
+                let bgX = col * (100 / (GRID_SIZE - 1));
+                let bgY = row * (100 / (GRID_SIZE - 1));
+                piece.style.backgroundPosition = `${bgX}% ${bgY}%`;
+                
+                piece.addEventListener('click', handlePieceClick);
+                piecesArray.push(piece);
+            }
+
+            piecesArray.sort(() => Math.random() - 0.5);
+            piecesArray.forEach(piece => tray.appendChild(piece));
+
+            // Tắt màn hình chờ
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        // --- LOGIC ĐIỀU KHIỂN GHÉP ---
+        function handlePieceClick(e) {
+            e.stopPropagation();
+            let clickedPiece = e.currentTarget;
+
+            if (selectedPiece === clickedPiece) {
+                clickedPiece.classList.remove('selected');
+                selectedPiece = null;
+                return;
+            }
+
+            if (selectedPiece) {
+                let parentA = selectedPiece.parentElement;
+                let parentB = clickedPiece.parentElement;
+
+                parentB.appendChild(selectedPiece);
+                parentA.appendChild(clickedPiece);
+
+                selectedPiece.classList.remove('selected');
+                selectedPiece = null;
+                checkWin();
+            } else {
+                selectedPiece = clickedPiece;
+                clickedPiece.classList.add('selected');
+            }
+        }
+
+        function handleSlotClick(e) {
+            let slot = e.currentTarget;
+            if (selectedPiece && slot.children.length === 0) {
+                slot.appendChild(selectedPiece);
+                selectedPiece.classList.remove('selected');
+                selectedPiece = null;
+                checkWin();
+            }
+        }
+
+        tray.addEventListener('click', (e) => {
+            if (e.target === tray && selectedPiece) {
+                tray.appendChild(selectedPiece);
+                selectedPiece.classList.remove('selected');
+                selectedPiece = null;
+                checkWin();
+            }
+        });
+
+        function checkWin() {
+            let correctCount = 0;
+            const slots = document.querySelectorAll('.slot');
+            
+            slots.forEach((slot, index) => {
+                if (slot.children.length > 0) {
+                    let piece = slot.children[0];
+                    if (parseInt(piece.dataset.id) === index) {
+                        correctCount++;
+                    }
+                }
+            });
+
+            document.getElementById('scoreText').innerText = `${correctCount} / 9`;
+
+            if (correctCount === TOTAL_PIECES) {
+                setTimeout(() => {
+                    let completed = JSON.parse(localStorage.getItem('dogGame_completedTasks')) || [];
+                    if (!completed.includes(2)) {
+                        completed.push(2);
+                    }
+                    localStorage.setItem('dogGame_completedTasks', JSON.stringify(completed));
+
+                    alert("🎉 Tuyệt vời! Bạn đã ghép thành công 9 mảnh. Nhiệm vụ 2 hoàn tất!");
+                    window.location.href = "index.html?return=true";
+                }, 400);
+            }
+        }
+
+        function togglePreview() {
+            const modal = document.getElementById('previewModal');
+            modal.classList.toggle('hidden');
+        }
+
+    </script>
+</body>
+</html>

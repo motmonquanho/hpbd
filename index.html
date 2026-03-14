@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuôi Chú Chó Vàng - Premium Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #fbbf24;
+            --dark-gold: #d97706;
+            --light-gold: #fef3c7;
+            --sky-blue: #bae6fd;
+            --grass-green: #4ade80;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: #fdf4ff;
+            background-image: radial-gradient(#fde68a 0.5px, transparent 0.5px);
+            background-size: 20px 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Khung chứa chính */
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 6px solid #fff;
+            box-shadow: 0 25px 50px -12px rgba(217, 119, 6, 0.2);
+            border-radius: 50px;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        /* Môi trường 3D giả lập */
+        .viewport {
+            height: 280px;
+            border-radius: 40px;
+            background: linear-gradient(to bottom, var(--sky-blue) 0%, #fff 100%);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #fef3c7;
+        }
+
+        .sun {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            width: 40px;
+            height: 40px;
+            background: #fbbf24;
+            border-radius: 50%;
+            box-shadow: 0 0 30px #fcd34d;
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        @keyframes bounce-gentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .dog-image {
+            filter: drop-shadow(0 15px 15px rgba(0,0,0,0.15));
+            animation: bounce-gentle 3s ease-in-out infinite;
+            object-fit: contain;
+            transform-origin: bottom center;
+        }
+
+        /* Hiệu ứng nhún nhảy cho quà tặng */
+        @keyframes bounce-slight {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .animate-bounce-slight {
+            animation: bounce-slight 2s ease-in-out infinite;
+        }
+
+        /* Nhiệm vụ */
+        .task-item {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid transparent;
+        }
+
+        .task-item:hover:not(.completed) {
+            transform: scale(1.03) translateY(-2px);
+            background: #fffbeb;
+            border-color: var(--primary-gold);
+        }
+
+        .task-item.completed {
+            background: #f3f4f6;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .task-item.completed .check-icon {
+            display: block;
+        }
+
+        /* Cỏ */
+        .grass-layer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 60px;
+            background: var(--grass-green);
+            border-radius: 50% 50% 0 0 / 20% 20% 0 0;
+        }
+
+        /* Banner tiêu đề gỗ */
+        .wood-banner {
+            background: #8b4513;
+            color: #fff;
+            padding: 8px 24px;
+            border-radius: 12px;
+            border-bottom: 4px solid #5d2e0d;
+            transform: rotate(-2deg);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+        }
+
+        /* Form Overlay */
+        #loginOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #fde68a;
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.3s;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 600;
+        }
+
+        .input-field[type="file"] {
+            padding: 8px 12px;
+            background-color: #fff;
+            cursor: pointer;
+        }
+
+        .input-field:focus {
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
+        }
+
+        .btn-submit {
+            background: linear-gradient(to right, #fbbf24, #f59e0b);
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Spinner */
+        .spinner {
+            display: none;
+            width: 20px; height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body class="p-4 relative">
+
+    <!-- Nhạc nền -->
+    <audio id="bgMusic" loop>
+        <source src="nhac-nen.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Nút Bật/Tắt Nhạc Nền -->
+    <button id="musicToggle" class="fixed top-4 right-4 z-[9999] bg-white/80 backdrop-blur-sm w-12 h-12 flex items-center justify-center rounded-full shadow-lg border-2 border-yellow-300 text-2xl hover:scale-110 transition-transform cursor-pointer">
+        🔇
+    </button>
+
+    <!-- Màn hình Đăng ký / Đăng nhập -->
+    <div id="loginOverlay">
+        <div class="bg-white p-8 rounded-[30px] shadow-2xl border-4 border-yellow-200 max-w-sm w-full text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-300 to-orange-400"></div>
+            
+            <div id="registerFormContainer">
+                <div class="text-4xl mb-4 animate-bounce">🐶</div>
+                <h2 class="text-2xl font-black text-yellow-700 mb-2">Đăng Ký Nhận Nuôi</h2>
+                <p class="text-sm text-gray-500 mb-6 font-semibold">Vui lòng điền thông tin để bắt đầu hành trình!</p>
+                
+                <form id="loginForm" class="space-y-4 text-left">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Tên của bạn</label>
+                        <input type="text" name="playerName" id="playerName" class="input-field" placeholder="VD: Nguyễn Văn A" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Ngày sinh</label>
+                        <input type="date" name="playerDob" id="playerDob" class="input-field" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Hình ảnh đại diện (Tùy chọn)</label>
+                        <input type="file" id="playerImage" accept="image/*" class="input-field text-sm text-gray-600">
+                    </div>
+                    
+                    <button type="submit" id="submitBtn" class="btn-submit w-full mt-4 flex justify-center items-center gap-2">
+                        <span id="btnText">Bắt đầu nuôi cún</span>
+                        <div id="loadingSpinner" class="spinner"></div>
+                    </button>
+                </form>
+            </div>
+
+            <div id="welcomeBackContainer" style="display: none;">
+                <div class="text-5xl mb-4">✨</div>
+                <h2 class="text-2xl font-black text-yellow-700 mb-2">Chào mừng trở lại!</h2>
+                <p class="text-gray-600 mb-6 font-semibold">Cún con đang chờ bạn, <span id="wbName" class="text-orange-600 font-bold"></span>!</p>
+                
+                <div class="space-y-3">
+                    <button onclick="continueGame()" class="btn-submit w-full">Tiếp tục chơi</button>
+                    <button onclick="showRegister()" class="w-full py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-colors border-2 border-transparent hover:border-red-200">
+                        Đổi người chơi mới (Tạo lại)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Khung chứa Game -->
+    <div id="gameWrapper" class="main-card p-6 md:p-10" style="display: none; opacity: 0; transition: opacity 0.5s;">
+        <!-- Top Info -->
+        <div class="flex flex-col items-center mb-6 relative">
+            
+            <div class="wood-banner mb-4">
+                <h1 id="welcomeTitle" class="text-xl font-bold tracking-wide uppercase">Cún Vàng Vui Vẻ</h1>
+            </div>
+            
+            <div class="w-full space-y-2">
+                <div class="flex justify-between text-sm font-bold text-yellow-800 uppercase tracking-tighter">
+                    <span id="stageLabel">Giai đoạn: Em bé</span>
+                    <span id="xpLabel">0 / 100 XP</span>
+                </div>
+                <div class="h-4 w-full bg-yellow-100 rounded-full p-1 shadow-inner border border-yellow-200">
+                    <div id="xpBar" class="h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game World -->
+        <div class="viewport relative flex items-end justify-center">
+            <div class="sun"></div>
+            
+            <!-- Clouds -->
+            <div class="absolute top-10 left-10 opacity-40 text-3xl animate-pulse">☁️</div>
+            <div class="absolute top-16 right-16 opacity-30 text-2xl" style="animation: pulse 5s infinite">☁️</div>
+
+            <!-- Grass Decoration -->
+            <div class="grass-layer"></div>
+            <div class="absolute bottom-4 w-full flex justify-around opacity-40 text-xl z-0">
+                <span>🌱</span><span>🌼</span><span>🌷</span><span>🌱</span><span>🌻</span>
+            </div>
+
+            <!-- The Dog -->
+            <div id="dogContainer" class="z-10 mb-2">
+                <!-- Hình chó sẽ được chèn bằng JS -->
+            </div>
+
+            <div id="toast" class="absolute top-4 bg-white/90 px-4 py-2 rounded-2xl shadow-lg border border-yellow-200 text-xs font-bold text-yellow-700 opacity-0 transition-opacity transform -translate-y-2">
+                Woof! Cảm ơn bạn ❤️
+            </div>
+        </div>
+
+        <!-- 🎁 MÀN HÌNH QUÀ TẶNG (Chỉ hiện khi đủ 100 XP) 🎁 -->
+        <div id="giftSection" class="hidden mt-8 text-center animate-bounce-slight">
+            <h3 class="text-sm font-black text-rose-500 mb-6 bg-rose-100 inline-block px-5 py-2 rounded-full border-2 border-rose-200 shadow-sm uppercase tracking-widest">
+                🎁 Cún có quà tặng bạn nè! 🎁
+            </h3>
+            
+            <div class="flex justify-center gap-6 md:gap-10">
+                <!-- Quà 1: Bánh Kem -->
+                <a href="banhkem.html" class="flex flex-col items-center group">
+                    <div class="w-24 h-24 sm:w-28 sm:h-28 bg-white flex items-center justify-center text-6xl sm:text-7xl rounded-[30px] shadow-xl border-4 border-pink-200 group-hover:scale-110 group-hover:rotate-6 group-hover:border-pink-500 group-hover:shadow-pink-200 transition-all duration-300">
+                        🎂
+                    </div>
+                    <span class="mt-4 font-black text-pink-600 tracking-wide uppercase text-sm sm:text-base bg-white px-4 py-1 rounded-full shadow-sm">Bánh Kem</span>
+                </a>
+
+                <!-- Quà 2: Lá Thư -->
+                <a href="lathu.html" class="flex flex-col items-center group">
+                    <div class="w-24 h-24 sm:w-28 sm:h-28 bg-white flex items-center justify-center text-6xl sm:text-7xl rounded-[30px] shadow-xl border-4 border-blue-200 group-hover:scale-110 group-hover:-rotate-6 group-hover:border-blue-500 group-hover:shadow-blue-200 transition-all duration-300">
+                        💌
+                    </div>
+                    <span class="mt-4 font-black text-blue-600 tracking-wide uppercase text-sm sm:text-base bg-white px-4 py-1 rounded-full shadow-sm">Lá Thư</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Task List (Sẽ bị ẩn khi đủ 100 XP) -->
+        <div id="taskListSection" class="mt-8 space-y-3">
+            <p class="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-2">Hoạt động nuôi dưỡng</p>
+            <div id="taskList" class="grid gap-3">
+                <!-- Items injected by JS -->
+            </div>
+        </div>
+
+        <!-- Reset Button -->
+        <div class="mt-8 flex justify-center gap-4">
+            <button onclick="resetGame()" class="text-[10px] font-bold text-gray-400 hover:text-red-400 uppercase tracking-widest transition-colors">
+                Làm mới hành trình
+            </button>
+            <span class="text-gray-300">|</span>
+            <button onclick="logout()" class="text-[10px] font-bold text-gray-400 hover:text-blue-500 uppercase tracking-widest transition-colors">
+                Đổi người chơi
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- XỬ LÝ NHẠC NỀN LIÊN TỤC TRÊN NHIỀU TRANG ---
+        const bgMusic = document.getElementById('bgMusic');
+        const musicToggle = document.getElementById('musicToggle');
+        
+        // Đọc trạng thái lưu trong bộ nhớ
+        let isMusicPlaying = localStorage.getItem('dogGame_musicPlaying') === 'true';
+        let savedTime = parseFloat(localStorage.getItem('dogGame_musicTime')) || 0;
+        
+        bgMusic.volume = 0.5; // Đặt âm lượng nhạc nền ở mức 50%
+        
+        // Đặt lại thời gian bài hát về đúng chỗ trước khi chuyển trang
+        if (savedTime > 0) {
+            bgMusic.currentTime = savedTime;
+        }
+
+        function playMusic() {
+            bgMusic.play().then(() => {
+                isMusicPlaying = true;
+                musicToggle.innerText = '🔊';
+                localStorage.setItem('dogGame_musicPlaying', 'true');
+            }).catch(e => {
+                // Trình duyệt chặn autoplay, chờ người dùng click
+                console.log("Đang chờ tương tác người dùng để phát nhạc.");
+                musicToggle.innerText = '🔇';
+                isMusicPlaying = false;
+            });
+        }
+
+        // Nếu trước đó đang bật, tự động phát tiếp
+        if (isMusicPlaying) {
+            playMusic();
+        }
+
+        // Bật nhạc khi người dùng click lần đầu vào màn hình (Nếu chưa bật)
+        document.body.addEventListener('click', () => {
+            if (!isMusicPlaying && localStorage.getItem('dogGame_musicPlaying') !== 'false') {
+                playMusic();
+            }
+        }, { once: true });
+
+        // Nút tắt/bật nhạc thủ công
+        musicToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                isMusicPlaying = false;
+                musicToggle.innerText = '🔇';
+                localStorage.setItem('dogGame_musicPlaying', 'false');
+            } else {
+                playMusic();
+            }
+        });
+
+        // Liên tục lưu lại thời gian của bài nhạc mỗi 0.5s để khi nhảy trang không bị lệch nhịp
+        setInterval(() => {
+            if (isMusicPlaying) {
+                localStorage.setItem('dogGame_musicTime', bgMusic.currentTime);
+            }
+        }, 500);
+
+        // Lưu thời gian ngay lập tức khi nhấn qua trang khác
+        window.addEventListener('beforeunload', () => {
+            if (isMusicPlaying) {
+                localStorage.setItem('dogGame_musicTime', bgMusic.currentTime);
+            }
+        });
+
+        // --- CẤU HÌNH GAME ---
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxtEGfB0xd3yHecrAcD61F9ZPj1UJvgQ8IH2Pmyr-06BQMUPZLVrmw7xYds_C6nkgKq/exec"; 
+        
+        const tasks = [
+            { id: 1, text: "Nhiệm vụ 1: Xếp Hoa", icon: "1️⃣", xp: 20, url: "nhiemvu1.html" },
+            { id: 2, text: "Nhiệm vụ 2: Ghép Ảnh", icon: "2️⃣", xp: 20, url: "nhiemvu2.html" },
+            { id: 3, text: "Nhiệm vụ 3: Cung Hoàng Đạo", icon: "3️⃣", xp: 20, url: "nhiemvu3.html" },
+            { id: 4, text: "Nhiệm vụ 4: Tìm Hoa", icon: "4️⃣", xp: 20, url: "nhiemvu4.html" },
+            { id: 5, text: "Nhiệm vụ 5: Bí mật", icon: "5️⃣", xp: 20, url: "nhiemvu5.html" }
+        ];
+
+        let completed = JSON.parse(localStorage.getItem('dogGame_completedTasks')) || [];
+        let totalXp = completed.length * 20;
+
+        // --- HÌNH ẢNH CHÚ CHÓ ---
+        const dogAssets = {
+            small: `<img src="cho-con.png" alt="Chó con" class="dog-image" style="height: 120px; margin-bottom: 10px;" onerror="this.outerHTML='<div class=\\'text-6xl animate-bounce\\'>🐶</div>'">`,
+            medium: `<img src="cho-vua.png" alt="Chó lớn vừa" class="dog-image" style="height: 170px; margin-bottom: 5px;" onerror="this.outerHTML='<div class=\\'text-8xl animate-bounce\\'>🐕</div>'">`,
+            adult: `<img src="cho-lon.png" alt="Chó trưởng thành" class="dog-image" style="height: 220px; margin-bottom: -10px;" onerror="this.outerHTML='<div class=\\'text-9xl animate-bounce\\'>🦮</div>'">`
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedName = localStorage.getItem('dogGame_playerName');
+            const urlParams = new URLSearchParams(window.location.search);
+            const isReturning = urlParams.get('return');
+
+            if (savedName) {
+                if (isReturning === 'true') {
+                    startGameUI(savedName);
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } else {
+                    document.getElementById('registerFormContainer').style.display = 'none';
+                    document.getElementById('welcomeBackContainer').style.display = 'block';
+                    document.getElementById('wbName').innerText = savedName;
+                }
+            }
+        });
+
+        function continueGame() {
+            const savedName = localStorage.getItem('dogGame_playerName');
+            startGameUI(savedName);
+        }
+
+        function showRegister() {
+            localStorage.removeItem('dogGame_playerName');
+            resetGame();
+            document.getElementById('welcomeBackContainer').style.display = 'none';
+            document.getElementById('registerFormContainer').style.display = 'block';
+        }
+
+        function getBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        const form = document.getElementById('loginForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const spinner = document.getElementById('loadingSpinner');
+            
+            const playerName = document.getElementById('playerName').value;
+            const playerDob = document.getElementById('playerDob').value;
+            const fileInput = document.getElementById('playerImage');
+
+            btn.disabled = true;
+            btnText.innerText = "Đang lưu dữ liệu...";
+            spinner.style.display = "block";
+
+            const formData = new FormData();
+            formData.append("playerName", playerName);
+            formData.append("playerDob", playerDob);
+
+            if (fileInput.files.length > 0) {
+                try {
+                    const file = fileInput.files[0];
+                    const base64String = await getBase64(file);
+                    const base64Data = base64String.split(',')[1];
+                    formData.append("imageData", base64Data);
+                    formData.append("mimeType", file.type);
+                    formData.append("filename", playerName.replace(/\s+/g, '_') + "_" + file.name);
+                } catch (err) {
+                    console.error("Lỗi đọc file:", err);
+                }
+            }
+
+            fetch(SCRIPT_URL, { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    localStorage.setItem('dogGame_playerName', playerName);
+                    startGameUI(playerName);
+                })
+                .catch(error => {
+                    console.error('Lỗi!', error.message);
+                    localStorage.setItem('dogGame_playerName', playerName);
+                    startGameUI(playerName);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btnText.innerText = "Bắt đầu nuôi cún";
+                    spinner.style.display = "none";
+                });
+        });
+
+        function startGameUI(playerName) {
+            document.getElementById('loginOverlay').style.display = 'none';
+            const gameWrapper = document.getElementById('gameWrapper');
+            gameWrapper.style.display = 'block';
+            
+            document.getElementById('welcomeTitle').innerText = `Cún của ${playerName}`;
+            
+            setTimeout(() => {
+                gameWrapper.style.opacity = '1';
+                updateUI();
+            }, 50);
+        }
+
+        function logout() {
+            if(confirm("Bạn có muốn đăng xuất?")) {
+                showRegister();
+                document.getElementById('gameWrapper').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('gameWrapper').style.display = 'none';
+                    document.getElementById('loginOverlay').style.display = 'flex';
+                }, 500);
+            }
+        }
+
+        // --- GAME LOGIC ---
+        function renderTasks() {
+            const list = document.getElementById('taskList');
+            list.innerHTML = '';
+            tasks.forEach(t => {
+                const isDone = completed.includes(t.id);
+                const item = document.createElement('div');
+                item.className = `task-item group flex items-center p-4 rounded-3xl bg-white shadow-sm cursor-pointer ${isDone ? 'completed' : ''}`;
+                
+                item.onclick = () => {
+                    if (!isDone) {
+                        window.location.href = t.url;
+                    }
+                };
+                
+                item.innerHTML = `
+                    <div class="w-12 h-12 flex items-center justify-center bg-yellow-50 rounded-2xl text-2xl mr-4 group-hover:bg-yellow-100 transition-colors">${t.icon}</div>
+                    <div class="flex-1">
+                        <h4 class="font-bold text-gray-700 text-sm">${t.text}</h4>
+                        <p class="text-[10px] text-yellow-600 font-bold uppercase">+${t.xp} XP</p>
+                    </div>
+                    <div class="check-icon ${isDone ? 'block' : 'hidden'} text-green-500 font-bold">✓</div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function updateUI() {
+            const bar = document.getElementById('xpBar');
+            const label = document.getElementById('xpLabel');
+            const stage = document.getElementById('stageLabel');
+            const container = document.getElementById('dogContainer');
+            
+            const giftSection = document.getElementById('giftSection');
+            const taskListSection = document.getElementById('taskListSection');
+
+            bar.style.width = totalXp + '%';
+            label.innerText = `${totalXp} / 100 XP`;
+
+            // Logic thay đổi hình chú chó
+            if (totalXp < 40) {
+                stage.innerText = "Giai đoạn: Còn nhỏ";
+                container.innerHTML = dogAssets.small;
+            } else if (totalXp < 100) {
+                stage.innerText = "Giai đoạn: Lớn vừa";
+                container.innerHTML = dogAssets.medium;
+            } else {
+                stage.innerText = "Giai đoạn: Trưởng thành";
+                container.innerHTML = dogAssets.adult;
+            }
+
+            // Logic ẩn/hiện hộp quà nếu đạt 100 XP
+            if (totalXp >= 100) {
+                taskListSection.classList.add('hidden'); // Ẩn danh sách nhiệm vụ
+                giftSection.classList.remove('hidden');  // Hiện hộp quà
+                triggerEffects(); // Bắn tim/pháo bông
+            } else {
+                taskListSection.classList.remove('hidden');
+                giftSection.classList.add('hidden');
+                renderTasks();
+            }
+        }
+
+        function triggerEffects() {
+            for(let i=0; i<8; i++) {
+                const heart = document.createElement('div');
+                heart.innerHTML = ['❤️', '🎉', '✨', '🎁'][Math.floor(Math.random()*4)];
+                heart.className = 'absolute z-50 pointer-events-none text-2xl';
+                heart.style.left = '50%';
+                heart.style.bottom = '100px';
+                heart.style.transition = 'all 1.5s ease-out';
+                document.querySelector('.viewport').appendChild(heart);
+                
+                const x = (Math.random() - 0.5) * 300;
+                const y = -150 - Math.random() * 150;
+                
+                setTimeout(() => {
+                    heart.style.transform = `translate(${x}px, ${y}px) rotate(${x}deg) scale(1.5)`;
+                    heart.style.opacity = '0';
+                }, 50);
+                setTimeout(() => heart.remove(), 1500);
+            }
+        }
+
+        function resetGame() {
+            completed = [];
+            totalXp = 0;
+            localStorage.removeItem('dogGame_completedTasks');
+            updateUI();
+        }
+    </script>
+</body>
+</html>

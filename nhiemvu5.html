@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhiệm Vụ 5 - Chúc Mừng Sinh Nhật</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Quicksand', sans-serif; 
+            background: linear-gradient(135deg, #fef08a 0%, #fbcfe8 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        .birthday-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            box-shadow: 0 20px 40px -10px rgba(236, 72, 153, 0.3);
+            border: 4px solid #f9a8d4;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            padding: 2.5rem 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .floating-icon {
+            animation: float 3s ease-in-out infinite;
+            display: inline-block;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-10px) scale(1.05); }
+        }
+
+        /* Hiệu ứng pháo giấy (Confetti) */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f472b6;
+            animation: fall linear forwards;
+            z-index: 1;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(720deg); }
+        }
+
+    </style>
+</head>
+<body>
+     <!-- ========================================== -->
+    <!-- PHẦN 1: HTML NHẠC NỀN (DÁN VÀO SAU THẺ BODY) -->
+    <!-- ========================================== -->
+    <audio id="bgMusic" loop>
+        <source src="nhac-nen.mp3" type="audio/mpeg">
+    </audio>
+
+    <button id="musicToggle" class="fixed top-4 right-4 z-[9999] bg-white/80 backdrop-blur-sm w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full shadow-lg border-2 border-yellow-300 text-xl sm:text-2xl hover:scale-110 transition-transform cursor-pointer">
+        🔇
+    </button>
+    <!-- ========================================== -->
+    <div class="birthday-card">
+        <div class="text-7xl mb-6 floating-icon">🎂</div>
+        
+        <h1 class="text-2xl font-black text-pink-600 mb-6 uppercase tracking-wider">Nhiệm Vụ Cuối Cùng</h1>
+        
+        <div class="bg-gradient-to-br from-pink-50 to-white rounded-2xl p-6 border-2 border-dashed border-pink-300 mb-8 shadow-inner">
+            <p class="text-gray-700 font-bold text-lg leading-relaxed mb-4">
+                Nãy giờ chơi đủ rùi, hôm nay là sinh nhật đó, nghỉ ngơi và vui vẻ nhá! 
+            </p>
+            <p class="text-pink-500 text-xl font-black">
+                ✨ Nhiệm vụ này là bạn hãy vui vẻ trong ngày sinh nhật bạn nhé ✨
+            </p>
+        </div>
+
+        <button onclick="completeTask()" class="w-full bg-gradient-to-r from-pink-400 to-rose-500 text-white font-black py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all transform uppercase tracking-wider mb-6">
+            Hoàn Thành Nhiệm Vụ 5
+        </button>
+
+        <p class="text-sm font-bold text-rose-400 bg-rose-50 py-2 px-4 rounded-xl inline-block animate-pulse">
+            🎁 Chú cún bạn nuôi đã trưởng thành rùi và có điều bất ngờ cho bạn đó!
+        </p>
+    </div>
+
+    <script>
+         // ==========================================
+        // PHẦN 2: JAVASCRIPT NHẠC NỀN (DÁN VÀO ĐẦU THẺ SCRIPT)
+        // ==========================================
+        const bgMusic = document.getElementById('bgMusic');
+        const musicToggle = document.getElementById('musicToggle');
+        
+        let isMusicPlaying = localStorage.getItem('dogGame_musicPlaying') === 'true';
+        let savedTime = parseFloat(localStorage.getItem('dogGame_musicTime')) || 0;
+        
+        bgMusic.volume = 0.5;
+        
+        if (savedTime > 0) {
+            bgMusic.currentTime = savedTime;
+        }
+
+        function playMusic() {
+            bgMusic.play().then(() => {
+                isMusicPlaying = true;
+                musicToggle.innerText = '🔊';
+                localStorage.setItem('dogGame_musicPlaying', 'true');
+            }).catch(e => {
+                musicToggle.innerText = '🔇';
+                isMusicPlaying = false;
+            });
+        }
+
+        if (isMusicPlaying) {
+            playMusic();
+        }
+
+        document.body.addEventListener('click', () => {
+            if (!isMusicPlaying && localStorage.getItem('dogGame_musicPlaying') !== 'false') {
+                playMusic();
+            }
+        }, { once: true });
+
+        musicToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                isMusicPlaying = false;
+                musicToggle.innerText = '🔇';
+                localStorage.setItem('dogGame_musicPlaying', 'false');
+            } else {
+                playMusic();
+            }
+        });
+
+        setInterval(() => {
+            if (isMusicPlaying) {
+                localStorage.setItem('dogGame_musicTime', bgMusic.currentTime);
+            }
+        }, 500);
+
+        window.addEventListener('beforeunload', () => {
+            if (isMusicPlaying) {
+                localStorage.setItem('dogGame_musicTime', bgMusic.currentTime);
+            }
+        });
+        // ==========================================
+        // Hàm tạo hiệu ứng pháo giấy rơi liên tục
+        function createConfetti() {
+            const colors = ['#f472b6', '#c084fc', '#fbbf24', '#60a5fa', '#34d399', '#f87171'];
+            for (let i = 0; i < 60; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.top = -Math.random() * 50 + 'px';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Kích thước ngẫu nhiên
+                const size = Math.random() * 10 + 5;
+                confetti.style.width = size + 'px';
+                confetti.style.height = size + 'px';
+                
+                // Tốc độ và độ trễ ngẫu nhiên
+                confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                
+                document.body.appendChild(confetti);
+                
+                // Xóa phần tử sau khi rơi xong để không làm nặng trình duyệt
+                setTimeout(() => confetti.remove(), 5000);
+            }
+        }
+
+        // Chạy hiệu ứng ngay khi load trang và lặp lại mỗi 3 giây
+        window.onload = () => {
+            createConfetti();
+            setInterval(createConfetti, 3000);
+        };
+
+        // Hàm hoàn thành nhiệm vụ và lưu vào LocalStorage
+        function completeTask() {
+            let completed = JSON.parse(localStorage.getItem('dogGame_completedTasks')) || [];
+            if (!completed.includes(5)) {
+                completed.push(5);
+            }
+            localStorage.setItem('dogGame_completedTasks', JSON.stringify(completed));
+
+            // Trở về trang chính để thấy chú chó trưởng thành
+            window.location.href = "index.html?return=true";
+        }
+    </script>
+</body>
+</html>

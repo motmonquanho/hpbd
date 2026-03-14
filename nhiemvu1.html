@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhiệm Vụ 1 - Xếp Hoa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Quicksand', sans-serif; 
+            background: linear-gradient(135deg, #dcfce7 0%, #fef9c3 100%);
+            min-height: 100vh;
+        }
+
+        .flower-card {
+            background-color: #bef264;
+            transition: transform 0.3s, background-color 0.3s;
+            transform-style: preserve-3d;
+        }
+        
+        .flower-card:active {
+            transform: scale(0.95);
+        }
+
+        .flower-card.revealed {
+            background-color: #fff;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+            pointer-events: none;
+        }
+
+        .flower-card.matched {
+            background-color: #fde047;
+            animation: match-pop 0.5s ease-out;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        @keyframes match-pop {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .emoji-content {
+            opacity: 0;
+            transition: opacity 0.2s;
+            transform: scale(0.5);
+        }
+
+        .flower-card.revealed .emoji-content,
+        .flower-card.matched .emoji-content {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .question-mark {
+            position: absolute;
+            opacity: 1;
+            color: #4d7c0f;
+            transition: opacity 0.2s;
+        }
+
+        .flower-card.revealed .question-mark,
+        .flower-card.matched .question-mark {
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center py-8 px-2 relative">
+
+    <!-- ========================================== -->
+    <!-- PHẦN 1: HTML NHẠC NỀN (DÁN VÀO SAU THẺ BODY) -->
+    <!-- ========================================== -->
+    <audio id="bgMusic" loop>
+        <source src="nhac-nen.mp3" type="audio/mpeg">
+    </audio>
+
+    <button id="musicToggle" class="fixed top-4 right-4 z-[9999] bg-white/80 backdrop-blur-sm w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full shadow-lg border-2 border-yellow-300 text-xl sm:text-2xl hover:scale-110 transition-transform cursor-pointer">
+        🔇
+    </button>
+    <!-- ========================================== -->
+
+    <!-- Giao diện Game -->
+    <div class="bg-white/90 backdrop-blur-sm p-4 md:p-8 rounded-[30px] shadow-2xl text-center max-w-xl w-full border-4 border-green-300 mt-8">
+        <h1 class="text-2xl md:text-3xl font-bold text-green-700 mb-2">🌸 Xếp Hoa 🌸</h1>
+        <p class="text-sm text-gray-600 mb-6 font-semibold">Tìm tất cả các cặp hoa giống nhau để hoàn thành nhiệm vụ!</p>
+        
+        <div class="flex justify-between items-center mb-4 px-4 bg-green-50 rounded-xl py-2">
+            <span class="font-bold text-green-800">Tiến độ:</span>
+            <span id="scoreText" class="font-black text-xl text-orange-500">0 / 8</span>
+        </div>
+
+        <!-- Bảng Game 4x4 -->
+        <div id="gameBoard" class="grid grid-cols-4 gap-2 sm:gap-3 mx-auto mb-8 bg-green-100 p-3 rounded-2xl">
+            <!-- Thẻ bài sẽ được chèn bằng JS -->
+        </div>
+
+        <a href="index.html" class="inline-block mt-4 text-sm font-bold text-gray-400 hover:text-red-500 underline transition-colors">
+            Quay lại trang chủ (Hủy nhiệm vụ)
+        </a>
+    </div>
+
+    <script>
+        // ==========================================
+        // PHẦN 2: JAVASCRIPT NHẠC NỀN (DÁN VÀO ĐẦU THẺ SCRIPT)
+        // ==========================================
+        const bgMusic = document.getElementById('bgMusic');
+        const musicToggle = document.getElementById('musicToggle');
+        
+        let isMusicPlaying = localStorage.getItem('dogGame_musicPlaying') === 'true';
+        let savedTime = parseFloat(localStorage.getItem('dogGame_musicTime')) || 0;
+        
+        bgMusic.volume = 0.5;
+        
+        if (savedTime > 0) {
+            bgMusic.currentTime = savedTime;
+        }
+
+        function playMusic() {
+            bgMusic.play().then(() => {
+                isMusicPlaying = true;
+                musicToggle.innerText = '🔊';
+                localStorage.setItem('dogGame_musicPlaying', 'true');
+            }).catch(e => {
+                musicToggle.innerText = '🔇';
+                isMusicPlaying = false;
+            });
+        }
+
+        if (isMusicPlaying) {
+            playMusic();
+        }
+
+        document.body.addEventListener('click', () => {
+            if (!isMusicPlaying && localStorage.getItem('dogGame_musicPlaying') !== 'false') {
+                playMusic();
+            }
+        }, { once: true });
+
+        musicToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                isMusicPlaying = false;
+                musicToggle.innerText = '🔇';
+                localStorage.setItem('dogGame_musicPlaying', 'false');
+            } else {
+                playMusic();
+            }
+        });
+
+        setInterval(() => {
+            if (isMusicPlaying) {
+                localStorage.setItem('dogGame_musicTime', bgMusic.currentTime);
+            }
+        }, 500);
+
+        window.addEventListener('beforeunload', () => {
+            if (isMusicPlaying) {
+                localStorage.setItem('dogGame_musicTime', bgMusic.currentTime);
+            }
+        });
+        // ==========================================
+
+
+        // --- LOGIC GAME XẾP HOA CHÍNH ---
+        const allEmojis = ['🌸', '🌺', '🌻', '🌹', '🌷', '🌼', '🪷', '💮', '💐', '🏵️', '🌿', '🍀', '🍁', '🍄', '🌵', '🌴', '🌱', '🪴'];
+        const baseEmojis = allEmojis.sort(() => 0.5 - Math.random()).slice(0, 8);
+        
+        let cardsData = [...baseEmojis, ...baseEmojis];
+        cardsData.sort(() => Math.random() - 0.5);
+
+        const gameBoard = document.getElementById('gameBoard');
+        let firstCard = null;
+        let secondCard = null;
+        let lockBoard = false;
+        let matchedPairs = 0;
+
+        function createBoard() {
+            cardsData.forEach((emoji, index) => {
+                const card = document.createElement('div');
+                card.classList.add('flower-card', 'w-16', 'h-16', 'sm:w-20', 'sm:h-20', 'flex', 'items-center', 'justify-center', 'rounded-xl', 'cursor-pointer', 'text-3xl', 'sm:text-5xl', 'relative', 'shadow-sm');
+                card.dataset.emoji = emoji;
+                
+                card.innerHTML = `
+                    <span class="question-mark text-2xl sm:text-3xl font-black">?</span>
+                    <span class="emoji-content">${emoji}</span>
+                `;
+                
+                card.addEventListener('click', () => flipCard(card));
+                gameBoard.appendChild(card);
+            });
+        }
+
+        function flipCard(card) {
+            if (lockBoard || card === firstCard || card.classList.contains('revealed') || card.classList.contains('matched')) return;
+
+            card.classList.add('revealed');
+
+            if (!firstCard) {
+                firstCard = card;
+                return;
+            }
+
+            secondCard = card;
+            lockBoard = true;
+
+            checkForMatch();
+        }
+
+        function checkForMatch() {
+            const isMatch = firstCard.dataset.emoji === secondCard.dataset.emoji;
+
+            if (isMatch) {
+                disableCards();
+            } else {
+                unflipCards();
+            }
+        }
+
+        function disableCards() {
+            firstCard.classList.replace('revealed', 'matched');
+            secondCard.classList.replace('revealed', 'matched');
+
+            matchedPairs++;
+            document.getElementById('scoreText').innerText = `${matchedPairs} / 8`;
+
+            resetBoard();
+
+            if (matchedPairs === 8) {
+                setTimeout(winGame, 600);
+            }
+        }
+
+        function unflipCards() {
+            setTimeout(() => {
+                firstCard.classList.remove('revealed');
+                secondCard.classList.remove('revealed');
+                resetBoard();
+            }, 800);
+        }
+
+        function resetBoard() {
+            [firstCard, secondCard, lockBoard] = [null, null, false];
+        }
+
+        function winGame() {
+            let completed = JSON.parse(localStorage.getItem('dogGame_completedTasks')) || [];
+            if (!completed.includes(1)) {
+                completed.push(1);
+            }
+            localStorage.setItem('dogGame_completedTasks', JSON.stringify(completed));
+
+            alert("Tuyệt vời! Bạn đã tinh mắt tìm hết các loài hoa. Nhiệm vụ 1 hoàn thành!");
+            window.location.href = "index.html?return=true";
+        }
+
+        createBoard();
+    </script>
+</body>
+</html>

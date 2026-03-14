@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quà Tặng - Lá Thư Bí Mật</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Quicksand', sans-serif; 
+            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* --- BAO THƯ --- */
+        .envelope-container {
+            position: relative;
+            width: 320px;
+            height: 220px;
+            perspective: 1500px;
+            z-index: 10;
+        }
+
+        .envelope-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #f472b6; 
+            border-radius: 0 0 15px 15px;
+            cursor: pointer;
+            box-shadow: 0 15px 35px rgba(219, 39, 119, 0.2);
+        }
+
+        .envelope-flap {
+            position: absolute;
+            top: 0; left: 0; width: 0; height: 0;
+            border-left: 160px solid transparent;
+            border-right: 160px solid transparent;
+            border-top: 120px solid #f472b6;
+            transform-origin: top;
+            transition: transform 0.6s ease-in-out;
+            z-index: 30;
+        }
+
+        .envelope-front {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%; height: 100%;
+            background: #fbcfe8;
+            border-radius: 0 0 15px 15px;
+            z-index: 20;
+        }
+
+        .envelope-front::before {
+            content: '';
+            position: absolute;
+            bottom: 0; width: 0; height: 0;
+            border-left: 160px solid transparent;
+            border-right: 160px solid transparent;
+            border-bottom: 115px solid #f9a8d4;
+            z-index: 21;
+        }
+
+        .heart-seal {
+            position: absolute;
+            top: 40px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 40;
+            font-size: 2.8rem;
+            transition: opacity 0.3s;
+        }
+
+        /* --- LÁ THƯ --- */
+        #theLetter {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 90%;
+            max-width: 450px;
+            background: #fff;
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.3);
+            z-index: 2000; /* Nằm trên tất cả */
+            /* Bắt đầu thu nhỏ và nằm hơi thấp xuống (giống như đang trong bao thư) */
+            transform: translate(-50%, 10%) scale(0.05);
+            opacity: 0;
+            /* Hiệu ứng khi đóng lại sẽ thu nhỏ nhanh */
+            transition: transform 0.4s ease-in, opacity 0.3s ease-in;
+            pointer-events: none;
+            background-image: radial-gradient(#fce7f3 0.8px, transparent 0.8px);
+            background-size: 24px 24px;
+            border: 8px solid #fff;
+        }
+
+        .letter-content {
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.5rem;
+            line-height: 1.6;
+            color: #be185d;
+            text-align: center;
+            overflow: hidden; 
+        }
+
+        /* --- NÚT QUAY LẠI (KIỂU CHỮ LINK, LUÔN HIỆN) --- */
+        #backButton {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #9ca3af; /* Màu xám giống trong ảnh */
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: underline;
+            text-underline-offset: 4px;
+            z-index: 2001;
+            transition: color 0.3s;
+        }
+
+        #backButton:hover { 
+            color: #6b7280;
+        }
+
+        /* --- TRẠNG THÁI MỞ --- */
+        .is-open .envelope-flap {
+            transform: rotateX(180deg);
+        }
+
+        .is-open .heart-seal {
+            opacity: 0;
+        }
+
+        .is-open #theLetter {
+            /* Vị trí cuối cùng: giữa màn hình, kích thước thật */
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            pointer-events: auto;
+            /* Hiệu ứng khi mở: đợi nắp thư mở (0.5s) rồi mới từ từ bay ra và phóng to */
+            transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s, 
+                        opacity 0.9s ease-out 0.5s;
+        }
+
+        /* Overlay nền mờ nhẹ */
+        #bgOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0);
+            z-index: 1000;
+            pointer-events: none;
+            transition: background 0.6s, backdrop-filter 0.6s;
+        }
+
+        .is-open #bgOverlay {
+            background: rgba(219, 39, 119, 0.15);
+            backdrop-filter: blur(4px);
+            pointer-events: auto;
+        }
+
+        @media (max-width: 480px) {
+            .letter-content { font-size: 1.2rem; }
+            #theLetter { padding: 30px 20px; }
+            #backButton { bottom: 20px; font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Lớp nền mờ -->
+    <div id="bgOverlay"></div>
+
+    <!-- Nhạc riêng cho lá thư -->
+    <audio id="bgMusic" loop>
+        <source src="nhac-thu.mp3" type="audio/mpeg">
+    </audio>
+
+    <button id="musicToggle" class="fixed top-4 right-4 z-[9999] bg-white/90 backdrop-blur-sm w-12 h-12 flex items-center justify-center rounded-full shadow-lg border-2 border-pink-300 text-2xl hover:scale-110 transition-transform cursor-pointer">
+        🔇
+    </button>
+
+    <!-- Khung chứa bao thư (giữ z-index thấp hơn overlay) -->
+    <div class="flex flex-col items-center z-10 relative">
+        <h1 id="titleText" class="text-2xl font-black text-pink-700 mb-16 uppercase tracking-widest animate-pulse text-center">Chạm vào bao thư nhé 💌</h1>
+
+        <div class="envelope-container" id="envelopeContainer">
+            <div class="envelope-wrapper">
+                <div class="heart-seal">💖</div>
+                <div class="envelope-flap"></div>
+                <div class="envelope-front"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LÁ THƯ: Đã được đưa ra ngoài khung flex để không bị giới hạn z-index -->
+    <div id="theLetter">
+        <div class="letter-content">
+            <p class="font-bold text-3xl mb-6 text-pink-600">Gửi <span class="letterName"></span>,</p>
+            <p class="mb-4">Hôm nay là một ngày thật đặc biệt.</p>
+            <p class="mb-4">Hy vọng <span class="letterName"></span> có những giây phút vui vẻ khi cùng gia đình, bạn bè nhé.</p>
+            <p class="mb-4">Tuổi mới thành công mới luôn tự tin và vượt qua những khó khăn phía trước.</p>
+            <p class="mb-4">Chúc <span class="letterName"></span> thật nhiều may mắn, sức khỏe và luôn rạng rỡ.</p>
+            <p class="mb-8">Hãy luôn tự tin và yêu đời hơn nữa nhé!</p>
+            <p class="text-right font-bold text-pink-500 text-3xl">Mãi yêu!❤️</p>
+        </div>
+    </div>
+
+    <!-- NÚT QUAY LẠI: Nằm hoàn toàn độc lập bên ngoài -->
+    <a href="index.html" id="backButton">Quay lại trang chủ</a>
+
+    <script>
+        const container = document.getElementById('envelopeContainer');
+        const body = document.body;
+        const bgMusic = document.getElementById('bgMusic');
+        const musicToggle = document.getElementById('musicToggle');
+        const titleText = document.getElementById('titleText');
+
+        // Lấy tên từ LocalStorage
+        const fullName = localStorage.getItem('dogGame_playerName') || "Công Chúa Nhỏ";
+        function getShortName(name) {
+            const words = name.trim().split(/\s+/);
+            return words.length > 1 ? words.slice(1).join(" ") : name;
+        }
+        
+        // Thay vì dùng getElementById, dùng querySelectorAll để điền tên vào mọi chỗ có class="letterName"
+        const shortName = getShortName(fullName);
+        document.querySelectorAll('.letterName').forEach(element => {
+            element.innerText = shortName;
+        });
+
+        // Mở thư
+        container.addEventListener('click', (e) => {
+            e.stopPropagation();
+            body.classList.add('is-open');
+            titleText.style.opacity = "0";
+            if (bgMusic.paused) playMusic();
+        });
+
+        // Đóng thư khi nhấn ra ngoài (nhấn vào phần nền mờ)
+        document.getElementById('bgOverlay').addEventListener('click', () => {
+            body.classList.remove('is-open');
+            titleText.style.opacity = "1";
+        });
+
+        // Xử lý nhạc
+        let isMusicPlaying = false;
+        function playMusic() {
+            bgMusic.play().then(() => {
+                isMusicPlaying = true;
+                musicToggle.innerText = '🔊';
+            }).catch(() => {
+                musicToggle.innerText = '🔇';
+            });
+        }
+
+        musicToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                isMusicPlaying = false;
+                musicToggle.innerText = '🔇';
+            } else {
+                playMusic();
+            }
+        });
+
+        // Tự động phát nhạc khi tương tác
+        document.addEventListener('click', () => {
+            if (!isMusicPlaying) playMusic();
+        }, { once: true });
+    </script>
+</body>
+</html>

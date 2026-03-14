@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhiệm Vụ 4 - Tìm Hoa Đẹp Nhất</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Quicksand', sans-serif; 
+            background: linear-gradient(135deg, #dcfce7 0%, #fef9c3 100%);
+            min-height: 100vh;
+            overflow: hidden; /* Ngăn cuộn trang */
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            box-shadow: 0 20px 40px -10px rgba(34, 197, 94, 0.2);
+            border: 4px solid #bbf7d0;
+        }
+
+        /* Khung chứa ảnh hoa */
+        .image-container {
+            position: relative;
+            width: 100%;
+            height: 40vh;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 4px solid #86efac;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 5s ease; /* Hiệu ứng zoom nhẹ trong 5s */
+        }
+
+        .zoom-in img {
+            transform: scale(1.1);
+        }
+
+        /* Thanh đếm ngược màu xanh */
+        .timer-track {
+            width: 100%;
+            height: 16px;
+            background-color: #e2e8f0;
+            border-radius: 999px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+
+        .timer-fill {
+            height: 100%;
+            width: 100%; /* Bắt đầu từ 100% */
+            background: linear-gradient(90deg, #22c55e, #10b981);
+            border-radius: 999px;
+            transition: width 5s linear; /* Chạy từ từ trong đúng 5 giây */
+        }
+
+        /* Màn hình Kết Quả */
+        #resultScreen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease-in-out;
+            padding: 20px;
+            text-align: center;
+        }
+
+        #resultScreen.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Hiệu ứng bó hoa */
+        .bouquet-wrapper {
+            font-size: 6rem;
+            margin: 20px 0;
+            animation: float 3s ease-in-out infinite, popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2));
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .highlight-name {
+            color: #ec4899; /* Màu hồng nổi bật */
+            font-weight: 900;
+            text-transform: uppercase;
+            background: linear-gradient(to right, #ec4899, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4">
+     <!-- ========================================== -->
+    <!-- PHẦN 1: HTML NHẠC NỀN (DÁN VÀO SAU THẺ BODY) -->
+    <!-- ========================================== -->
+    <audio id="bgMusic" loop>
+        <source src="nhac-nen.mp3" type="audio/mpeg">
+    </audio>
+
+    <button id="musicToggle" class="fixed top-4 right-4 z-[9999] bg-white/80 backdrop-blur-sm w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full shadow-lg border-2 border-yellow-300 text-xl sm:text-2xl hover:scale-110 transition-transform cursor-pointer">
+        🔇
+    </button>
+    <!-- ========================================== -->
+
+    <div class="main-card p-6 md:p-8 text-center max-w-md w-full relative overflow-hidden">
+        
+        <!-- Phần hiển thị thử thách 5s -->
+        <div id="challengeScreen">
+            <h1 class="text-2xl font-black text-green-700 mb-2">🔎 Thử Thách Tinh Mắt</h1>
+            <p class="text-gray-700 font-bold mb-4 text-lg">Tìm trong hình bông hoa nào đẹp nhất?</p>
+
+            <!-- Hình ảnh hoa -->
+            <div class="image-container" id="imageBox">
+                <!-- Đổi src thành 'hoa.jpg' nếu bạn đã có file, đây là link dự phòng -->
+                <img src="hoa.jpg" onerror="this.src='https://images.unsplash.com/photo-1490750967868-88cb4ecb07cb?auto=format&fit=crop&w=800&q=80'" alt="Vườn hoa">
+            </div>
+
+            <!-- Thanh đếm ngược -->
+            <div class="timer-track">
+                <div class="timer-fill" id="timerBar"></div>
+            </div>
+            <p class="text-green-600 font-bold text-sm mt-2 animate-pulse" id="countdownText">Bạn có 5 giây...</p>
+        </div>
+
+        <!-- Nút quay lại (nằm dưới cùng) -->
+        <a href="index.html" class="inline-block mt-6 text-sm font-bold text-gray-400 hover:text-red-500 underline transition-colors relative z-10">
+            Quay lại trang chủ (Hủy nhiệm vụ)
+        </a>
+
+        <!-- Phần Kết Quả (Hiện ra sau 5s) -->
+        <div id="resultScreen">
+            <div class="text-4xl mb-2">✨</div>
+            <h2 class="text-2xl md:text-3xl font-black text-gray-800 leading-tight mb-6">
+                <span id="playerNameDisplay" class="highlight-name">Bạn</span> <br>
+                là bông hoa đẹp nhất đó kiếm chi nữa! 🥰
+            </h2>
+            
+            <div class="bouquet-wrapper">
+                💐🌸🌷
+            </div>
+
+            <p class="text-gray-500 font-semibold mb-8 px-4">Đừng tìm kiếm đâu xa, vì chính bạn đã là một bông hoa rực rỡ nhất rồi!</p>
+
+            <button onclick="completeTask()" class="w-full max-w-[250px] bg-gradient-to-r from-green-400 to-emerald-500 text-white font-black py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.05] transition-all transform uppercase tracking-wider">
+                Hoàn Thành Nhiệm Vụ 4
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // PHẦN 2: JAVASCRIPT NHẠC NỀN (DÁN VÀO ĐẦU THẺ SCRIPT)
+        // ==========================================
+        const bgMusic = document.getElementById('bgMusic');
+        const musicToggle = document.getElementById('musicToggle');
+        
+        let isMusicPlaying = localStorage.getItem('dogGame_musicPlaying') === 'true';
+        let savedTime = parseFloat(localStorage.getItem('dogGame_musicTime')) || 0;
+        
+        bgMusic.volume = 0.5;
+        
+        if (savedTime > 0) {
+            bgMusic.currentTime = savedTime;
+        }
+
+        function playMusic() {
+            bgMusic.play().then(() => {
+                isMusicPlaying = true;
+                musicToggle.innerText = '🔊';
+                localStorage.setItem('dogGame_musicPlaying', 'true');
+            }).catch(e => {
+                musicToggle.innerText = '🔇';
+                isMusicPlaying = false;
+            });
+        }
+
+        if (isMusicPlaying) {
+            playMusic();
+        }
+
+        document.body.addEventListener('click', () => {
+            if (!isMusicPlaying && localStorage.getItem('dogGame_musicPlaying') !== 'false') {
+                playMusic();
+            }
+        }, { once: true });
+
+        musicToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                isMusicPlaying = false;
+                musicToggle.innerText = '🔇';
+                localStorage.setItem('dogGame_musicPlaying', 'false');
+            } else {
+                playMusic();
+            }
+        });
+
+        setInterval(() => {
+            if (isMusicPlaying) {
+                localStorage.setItem('dogGame_musicTime', bgMusic.currentTime);
+            }
+        }, 500);
+
+        window.addEventListener('beforeunload', () => {
+            if (isMusicPlaying) {
+                localStorage.setItem('dogGame_musicTime', bgMusic.currentTime);
+            }
+        });
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Xử lý lấy chữ lót và tên từ LocalStorage
+            const fullName = localStorage.getItem('dogGame_playerName') || "Bạn ơi";
+            const shortName = extractFirstName(fullName);
+            
+            document.getElementById('playerNameDisplay').innerText = shortName;
+
+            // 2. Kích hoạt hiệu ứng đếm ngược 5 giây
+            setTimeout(() => {
+                // Thu nhỏ thanh xanh về 0%
+                document.getElementById('timerBar').style.width = '0%';
+                // Zoom nhẹ tấm hình trong 5 giây
+                document.getElementById('imageBox').classList.add('zoom-in');
+            }, 100); // Đợi 1 chút để DOM load xong rồi mới chạy CSS transition
+
+            // 3. Đếm ngược số trên màn hình
+            let timeLeft = 5;
+            const countInterval = setInterval(() => {
+                timeLeft--;
+                if(timeLeft > 0) {
+                    document.getElementById('countdownText').innerText = `Còn ${timeLeft} giây...`;
+                } else {
+                    document.getElementById('countdownText').innerText = `Hết giờ!`;
+                    clearInterval(countInterval);
+                }
+            }, 1000);
+
+            // 4. Hết 5 giây -> Hiện kết quả bất ngờ
+            setTimeout(() => {
+                showResult();
+            }, 5000);
+        });
+
+        // Hàm tách lấy Chữ lót và Tên (bỏ Họ đi)
+        function extractFirstName(fullName) {
+            // Xóa khoảng trắng thừa và tách thành mảng các từ
+            const parts = fullName.trim().split(/\s+/);
+            
+            // Nếu tên có nhiều hơn 1 chữ (vd: Nguyễn Văn A)
+            if (parts.length > 1) {
+                // Bỏ chữ đầu tiên (Họ), nối các chữ còn lại
+                return parts.slice(1).join(" "); 
+            }
+            
+            // Nếu chỉ nhập 1 chữ thì lấy luôn chữ đó
+            return fullName;
+        }
+
+        // Hàm hiển thị màn hình kết quả
+        function showResult() {
+            const resultScreen = document.getElementById('resultScreen');
+            resultScreen.classList.add('show');
+            createPetals(); // Rơi cánh hoa
+        }
+
+        // Hiệu ứng cánh hoa rơi nhẹ nhàng
+        function createPetals() {
+            const petals = ['🌸', '🌺', '🍃', '✨'];
+            for (let i = 0; i < 20; i++) {
+                const petal = document.createElement('div');
+                petal.innerText = petals[Math.floor(Math.random() * petals.length)];
+                petal.style.position = 'absolute';
+                petal.style.left = Math.random() * 100 + 'vw';
+                petal.style.top = '-50px';
+                petal.style.fontSize = Math.random() * 15 + 10 + 'px';
+                petal.style.opacity = Math.random() * 0.5 + 0.5;
+                petal.style.zIndex = '60';
+                petal.style.pointerEvents = 'none';
+                
+                // Animation rơi
+                const duration = Math.random() * 3 + 2;
+                petal.style.transition = `transform ${duration}s linear, top ${duration}s linear`;
+                
+                document.body.appendChild(petal);
+                
+                setTimeout(() => {
+                    petal.style.top = '100vh';
+                    petal.style.transform = `rotate(${Math.random() * 360}deg) translateX(${Math.random() * 100 - 50}px)`;
+                }, 50);
+
+                setTimeout(() => petal.remove(), duration * 1000);
+            }
+        }
+
+        function completeTask() {
+            // Đánh dấu nhiệm vụ 4 hoàn thành vào localStorage
+            let completed = JSON.parse(localStorage.getItem('dogGame_completedTasks')) || [];
+            if (!completed.includes(4)) {
+                completed.push(4);
+            }
+            localStorage.setItem('dogGame_completedTasks', JSON.stringify(completed));
+
+            // Trả về trang chủ và cộng điểm
+            window.location.href = "index.html?return=true";
+        }
+    </script>
+</body>
+</html>
