@@ -275,14 +275,24 @@
         let isExtinguished = false;
         let animationId;
 
-        // Hàm tách lấy Chữ lót và Tên
+        // Hàm tách lấy đúng 2 chữ cuối cùng của tên và viết hoa chữ cái đầu
         function extractFirstName(fullName) {
             if (!fullName) return "Bạn";
+            
+            // Xóa khoảng trắng thừa và tách thành mảng các từ
             const parts = fullName.trim().split(/\s+/);
-            if (parts.length > 1) {
-                return parts.slice(1).join(" "); 
-            }
-            return fullName;
+            
+            // Lấy tối đa 2 từ cuối cùng trong mảng
+            const lastTwoWords = parts.slice(-2);
+            
+            // Xử lý viết hoa chữ cái đầu và viết thường các chữ cái sau của mỗi từ
+            const formattedWords = lastTwoWords.map(word => {
+                if (!word) return "";
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            });
+            
+            // Ghép lại thành chuỗi hoàn chỉnh
+            return formattedWords.join(" ");
         }
 
         // Lấy tên từ bộ nhớ khi trang tải xong
