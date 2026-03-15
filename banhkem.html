@@ -343,7 +343,7 @@
             document.getElementById('volFill').style.width = volPercent + '%';
 
             // NẾU ÂM THANH LỚN (Ngưỡng > 50) -> THỔI TẮT NẾN
-            if (averageVolume > 100) {
+            if (averageVolume > 75) {
                 extinguishCandles();
             } else {
                 animationId = requestAnimationFrame(checkAudioVolume);
